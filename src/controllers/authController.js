@@ -3,8 +3,9 @@ const { validationResult } = require("express-validator");
 const { generateToken } = require("../utils/jwt");
 const { User } = require("../models");
 const crypto = require("crypto");
-const sendEmail = require("../utils/sendEmail"); // You'll need to create this utility
+const sendEmail = require("../utils/sendEmail"); 
 const { Op } = require("sequelize");
+
 
 exports.signup = async (req, res) => {
   const errors = validationResult(req);
@@ -151,10 +152,9 @@ exports.forgotPassword = async (req, res) => {
       email: user.email,
       subject: "Password Reset Request",
       message,
-    })
+    });
 
-
-    res.json({ message: "Password reset email sent"});
+    res.json({ message: "Password reset email sent" });
   } catch (error) {
     console.error("Forgot password error:", error);
     res.status(500).json({ message: "Server error" });
