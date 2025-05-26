@@ -3,7 +3,6 @@ module.exports = (sequelize, DataTypes) => {
     code: { type: DataTypes.STRING, primaryKey: true },
     applyDate: DataTypes.DATE,
     expiryDate: DataTypes.DATE,
-    useAccount: DataTypes.INTEGER,
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,
   });

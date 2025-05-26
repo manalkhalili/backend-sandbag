@@ -8,7 +8,6 @@ module.exports = (sequelize, DataTypes) => {
 
   Score.associate = (models) => {
     Score.belongsTo(models.Child, { foreignKey: "childId" });
-    Score.belongsTo(models.Material, { foreignKey: "materialId" });
   };
 
   return Score;
