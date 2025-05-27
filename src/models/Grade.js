@@ -8,7 +8,6 @@ module.exports = (sequelize, DataTypes) => {
 
   Grade.associate = (models) => {
     Grade.hasMany(models.Child, { foreignKey: "graded" });
-    Grade.hasMany(models.Material, { foreignKey: "graded" });
     Grade.hasMany(models.Code, { foreignKey: "graded" });
   };
 

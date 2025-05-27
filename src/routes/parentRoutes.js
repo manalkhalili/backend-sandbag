@@ -7,5 +7,7 @@ const parentController = require("../controllers/parentController");
 router.use(authMiddleware);
 
 router.get("/children", parentController.getMyChildren);
+router.post("/add-child", parentController.addChild);
 
 module.exports = router;
+
