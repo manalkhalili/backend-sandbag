@@ -1,12 +1,5 @@
-const {
-  Child,
-  User,
-  Score,
-  Notification,
-  Grade,
-  Material,
-  Report,
-} = require("../models");
+const { Child, User, Code, Grade } = require("../models");
+const bcrypt = require("bcryptjs");
 
 exports.getMyChildren = async (req, res, next) => {
   try {
@@ -26,7 +19,6 @@ exports.addChild = async (req, res) => {
       childPassword,
       gradeId,
       currentSemester,
-      academicYear,
       couponCode,
       birthDate,
       city,
@@ -40,13 +32,12 @@ exports.addChild = async (req, res) => {
       !childPassword ||
       !gradeId ||
       !currentSemester ||
-      !academicYear ||
       !couponCode
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "All fields are required: childName, childPassword, gradeId, currentSemester, academicYear, couponCode.",
+          "All fields are required: childName, childPassword, gradeId, currentSemester, couponCode.",
       });
     }
 
@@ -65,15 +56,12 @@ exports.addChild = async (req, res) => {
         message: "Grade not found. Please provide a valid grade ID.",
       });
     }
-
     const coupon = await Code.findOne({
       where: {
         code: couponCode,
-        graded: gradeId,
-        isUsed: false,
       },
     });
-
+    console.log("Coupon found:", coupon);
     if (!coupon) {
       return res.status(404).json({
         success: false,
@@ -121,7 +109,6 @@ exports.addChild = async (req, res) => {
       userId: childUser.id,
       graded: gradeId,
       currentSemester: currentSemester,
-      academicYear: academicYear,
       subscriptionType: coupon.type,
       subscriptionStartDate: subscriptionStartDate,
       subscriptionEndDate: subscriptionEndDate,

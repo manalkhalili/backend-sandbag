@@ -10,4 +10,3 @@ router.get("/children", parentController.getMyChildren);
 router.post("/add-child", parentController.addChild);
 
 module.exports = router;
-

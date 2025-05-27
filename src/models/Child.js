@@ -51,11 +51,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: "semester1",
     },
-    academicYear: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "2024-2025",
-    },
     subscriptionType: {
       type: DataTypes.ENUM("semester1", "semester2", "full_year"),
       allowNull: false,
@@ -69,11 +64,6 @@ module.exports = (sequelize, DataTypes) => {
     subscriptionEndDate: {
       type: DataTypes.DATE,
       allowNull: true,
-    },
-    isSubscriptionActive: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false,
     },
     createdAt: {
       type: DataTypes.DATE,
