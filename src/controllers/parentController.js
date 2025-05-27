@@ -19,24 +19,42 @@ exports.getMyChildren = async (req, res, next) => {
   }
 };
 
-exports.getChildWithReports = async (req, res, next) => {
+exports.getChildWithDetailes = async (req, res, next) => {
   try {
-    const childId = req.params.id;
-
-    const child = await Child.findByPk(childId, {
+    const childId = req.params.id; // and then     // return the child name , and the code expirydate
+    const child = await Child.findOne({
+      where: { id: childId },
       include: [
-        { model: Grade, attributes: ["name"] },
+        {
+          model: User,
+          as: "parent",
+          attributes: ["id", "name", "email"],
+        },
+        {
+          model: Grade,
+          as: "graded",
+          attributes: ["id", "name"],
+        },
         {
           model: Score,
-          include: [{ model: Material, attributes: ["title", "type"] }],
+          as: "scores",
+          attributes: ["id", "score", "createdAt"],
+        },
+        {
+          model: Notification,
+          as: "notifications",
+          attributes: ["id", "message", "createdAt"],
+        },
+        {
+          model: Material,
+          as: "materials",
+          attributes: ["id", "title", "content"],
         },
       ],
     });
-
-    if (!child) return res.status(404).json({ message: "Child not found" });
-
-    res.json(child);
   } catch (err) {
     next(err);
   }
 };
+
+// parent create child
