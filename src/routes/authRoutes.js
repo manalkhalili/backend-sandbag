@@ -16,7 +16,7 @@ router.post(
 
 router.post(
   "/signin",
-  [check("email").isEmail(), check("password").isLength({ min: 6 })],
+  [check("email").isEmail().optional(), check("password").isLength({ min: 6 })],
   authController.signin
 );
 
@@ -32,6 +32,5 @@ router.post(
   [check("token").not().isEmpty(), check("password").isLength({ min: 6 })],
   authController.resetPassword
 );
-
 
 module.exports = router;

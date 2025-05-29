@@ -32,7 +32,7 @@ exports.signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "parent", // Default role
+      role: "parent", 
       phone,
     });
 
@@ -79,9 +79,7 @@ exports.signin = async (req, res) => {
       }
 
       user = await User.findOne({ where: { username, role: "child" } });
-    }
-
-    else if (role === "parent") {
+    } else if (role === "parent") {
       if (!email) {
         return res.status(400).json({
           success: false,
@@ -90,9 +88,7 @@ exports.signin = async (req, res) => {
       }
 
       user = await User.findOne({ where: { email, role: "parent" } });
-    }
-
-    else {
+    } else {
       return res.status(400).json({
         success: false,
         message: "Invalid role. Allowed roles: child, parent",
@@ -106,14 +102,14 @@ exports.signin = async (req, res) => {
       });
     }
 
-    // const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
 
-    // if (!isMatch) {
-    //   return res.status(401).json({
-    //     success: false,
-    //     message: "Invalid credentials",
-    //   });
-    // }
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
 
     const token = generateToken(user.id, user.role);
 
@@ -144,7 +140,6 @@ exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Find user by email
     const user = await User.findOne({ where: { email } });
 
     if (!user) {

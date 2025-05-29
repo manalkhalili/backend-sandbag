@@ -3,7 +3,7 @@ const express = require("express");
 const authRoutes = require("./authRoutes");
 const parentRoutes = require("./parentRoutes");
 const authMiddleware = require("../middlewares/auth");
-// const childRoutes = require("./childRoutes");
+const childRoutes = require("./childRoutes");
 // const adminRoutes = require("./adminRoutes");
 
 const router = express.Router();

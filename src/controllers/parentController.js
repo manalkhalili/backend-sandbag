@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs");
 exports.getMyChildren = async (req, res, next) => {
   try {
     const parentId = req.user.id;
-    console.log("Parent ID:", parentId);
     const children = await Child.findAll({ where: { parentId: parentId } });
     res.json(children);
   } catch (err) {
@@ -90,7 +89,7 @@ exports.addChild = async (req, res) => {
     const hashedPassword = await bcrypt.hash(childPassword, 12);
     const childUser = await User.create({
       name: childName,
-      username: childName.toLowerCase().replace(/\s+/g, "_") + "_" + Date.now(),
+      username: childName.toLowerCase(),
       password: hashedPassword,
       role: "child",
       gender: gender,
@@ -140,19 +139,6 @@ exports.addChild = async (req, res) => {
       ],
     });
 
-    const semesterInfo = {
-      semester1: {
-        name: "الفصل الأول",
-        description: "سبتمبر - ديسمبر",
-        months: [9, 10, 11, 12],
-      },
-      semester2: {
-        name: "الفصل الثاني",
-        description: "يناير - أبريل",
-        months: [1, 2, 3, 4],
-      },
-    };
-
     res.status(201).json({
       success: true,
       message: "Added child successfully",
@@ -173,6 +159,97 @@ exports.addChild = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal server error while adding child.",
+      error: error.message,
+    });
+  }
+};
+
+exports.editChild = async (req, res) => {
+  try {
+    const parentId = req.user.id;
+    const childId = req.params.childId;
+
+    const {
+      childName,
+      childPassword,
+      gradeId,
+      currentSemester,
+      birthDate,
+      city,
+      gender,
+    } = req.body;
+
+    const child = await Child.findOne({
+      where: { id: childId, parentId },
+      include: [{ model: User, as: "userAccount" }],
+    });
+
+    if (!child) {
+      return res.status(404).json({
+        success: false,
+        message: "Child not found or does not belong to this parent.",
+      });
+    }
+
+    const updatesToUser = {};
+    if (childName) {
+      updatesToUser.name = childName;
+      updatesToUser.username = childName.toLowerCase();
+    }
+    if (gender) updatesToUser.gender = gender;
+    if (childPassword) {
+      const hashedPassword = await bcrypt.hash(childPassword, 12);
+      updatesToUser.password = hashedPassword;
+    }
+    await child.userAccount.update(updatesToUser);
+
+    if (
+      currentSemester &&
+      !["semester1", "semester2"].includes(currentSemester)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid semester. Allowed: 'semester1' or 'semester2'.",
+      });
+    }
+
+    if (gradeId) {
+      const grade = await Grade.findByPk(gradeId);
+      if (!grade) {
+        return res.status(400).json({
+          success: false,
+          message: "Grade not found.",
+        });
+      }
+    }
+
+    await child.update({
+      name: childName || child.name,
+      graded: gradeId || child.graded,
+      currentSemester: currentSemester || child.currentSemester,
+      birthDate: birthDate || child.birthDate,
+      city: city || child.city,
+    });
+
+    res.json({
+      success: true,
+      message: "Child updated successfully",
+      data: {
+        child: {
+          ...child.toJSON(),
+          user: {
+            id: child.userAccount.id,
+            name: child.userAccount.name,
+            username: child.userAccount.username,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error updating child:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while updating child.",
       error: error.message,
     });
   }
