@@ -3,7 +3,7 @@ const { validationResult } = require("express-validator");
 const { generateToken } = require("../utils/jwt");
 const { User } = require("../models");
 const crypto = require("crypto");
-const sendEmail = require("../utils/sendEmail"); // You'll need to create this utility
+const sendEmail = require("../utils/sendEmail");
 const { Op } = require("sequelize");
 
 exports.signup = async (req, res) => {
@@ -32,7 +32,7 @@ exports.signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "parent", // Default role
+      role: "parent", 
       phone,
     });
 
@@ -65,15 +65,40 @@ exports.signin = async (req, res) => {
     });
   }
 
-  const { email, password } = req.body;
+  const { email, username, password, role } = req.body;
 
   try {
-    const user = await User.findOne({ where: { email } });
+    let user;
+
+    if (role === "child") {
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          message: "Username is required for child login",
+        });
+      }
+
+      user = await User.findOne({ where: { username, role: "child" } });
+    } else if (role === "parent") {
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is required for parent login",
+        });
+      }
+
+      user = await User.findOne({ where: { email, role: "parent" } });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role. Allowed roles: child, parent",
+      });
+    }
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Email not registered",
+        message: "User not found",
       });
     }
 
@@ -115,7 +140,6 @@ exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Find user by email
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
@@ -151,10 +175,9 @@ exports.forgotPassword = async (req, res) => {
       email: user.email,
       subject: "Password Reset Request",
       message,
-    })
+    });
 
-
-    res.json({ message: "Password reset email sent"});
+    res.json({ message: "Password reset email sent" });
   } catch (error) {
     console.error("Forgot password error:", error);
     res.status(500).json({ message: "Server error" });
