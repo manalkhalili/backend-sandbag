@@ -4,9 +4,10 @@ const authMiddleware = require("../middlewares/auth");
 const parentController = require("../controllers/parentController");
 const { checkRole } = require("../middlewares/checkRole");
 // show all children of a parent
-router.use(authMiddleware);
+router.use(authMiddleware, checkRole("parent"));
+router.get("/children", parentController.getMyChildren);
+router.post("/children", parentController.addChild);
+router.put("/children/:childId", parentController.editChild);
 
-router.get("/children", checkRole("parent"), parentController.getMyChildren);
-router.post("/add-child", checkRole("parent"), parentController.addChild);
 
 module.exports = router;
