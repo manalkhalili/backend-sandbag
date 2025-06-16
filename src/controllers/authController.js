@@ -32,7 +32,7 @@ exports.signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "parent", 
+      role: "parent",
       phone,
     });
 
@@ -79,7 +79,7 @@ exports.signin = async (req, res) => {
       }
 
       user = await User.findOne({ where: { username, role: "child" } });
-    } else if (role === "parent") {
+    } else if (role === "parent" || role == "admin") {
       if (!email) {
         return res.status(400).json({
           success: false,
@@ -87,7 +87,7 @@ exports.signin = async (req, res) => {
         });
       }
 
-      user = await User.findOne({ where: { email, role: "parent" } });
+      user = await User.findOne({ where: { email, role: role } });
     } else {
       return res.status(400).json({
         success: false,
