@@ -32,7 +32,7 @@ exports.signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "parent", 
+      role: "parent",
       phone,
     });
 
@@ -79,7 +79,7 @@ exports.signin = async (req, res) => {
       }
 
       user = await User.findOne({ where: { username, role: "child" } });
-    } else if (role === "parent") {
+    } else if (role === "parent" || role == "admin") {
       if (!email) {
         return res.status(400).json({
           success: false,
@@ -87,7 +87,7 @@ exports.signin = async (req, res) => {
         });
       }
 
-      user = await User.findOne({ where: { email, role: "parent" } });
+      user = await User.findOne({ where: { email, role: role } });
     } else {
       return res.status(400).json({
         success: false,
@@ -148,7 +148,7 @@ exports.forgotPassword = async (req, res) => {
         .json({ message: "User not found with this email" });
     }
 
-    const resetToken = crypto.randomBytes(20).toString("hex");
+    const resetToken = crypto.randomBytes(8).toString("hex");
 
     const resetTokenExpiry = new Date(Date.now() + 3600000);
 
@@ -160,16 +160,9 @@ exports.forgotPassword = async (req, res) => {
       { where: { id: user.id } }
     );
 
-    const resetUrl = `${req.protocol}://${req.get(
-      "host"
-    )}/reset-password/${resetToken}`;
-
-    const message = `
-      You requested a password reset. Please click on the following link to reset your password:
-      ${resetUrl}
-      
-      If you didn't request this, please ignore this email.
-    `;
+    let message = `You requested a password reset. this is your reset token: ${resetToken}.
+Please use it within the next hour. If you did not request this, please ignore this email.`;
+    message += `\n\nIf you did not request this, please ignore this email.`;
 
     await sendEmail({
       email: user.email,

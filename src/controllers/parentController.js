@@ -101,6 +101,9 @@ exports.addChild = async (req, res) => {
     subscriptionEndDate.setMonth(
       subscriptionEndDate.getMonth() + coupon.duration
     );
+    let avatarUrl = "";
+    if (gender == "male") avatarUrl = "./assets/boyAvatar.png";
+    else if ((gender = "female")) avatarUrl = "./assets/girlAvatar.png";
 
     const child = await Child.create({
       name: childName,
@@ -114,6 +117,7 @@ exports.addChild = async (req, res) => {
       birthDate: birthDate,
       city: city,
       isSubscriptionActive: true,
+      profileImage: avatarUrl,
     });
 
     await coupon.update({
