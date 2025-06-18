@@ -148,7 +148,7 @@ exports.forgotPassword = async (req, res) => {
         .json({ message: "User not found with this email" });
     }
 
-    const resetToken = crypto.randomBytes(8).toString("hex");
+    const resetToken = crypto.randomBytes(4).toString("hex");
 
     const resetTokenExpiry = new Date(Date.now() + 3600000);
 
