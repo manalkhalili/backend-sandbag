@@ -26,7 +26,8 @@ const generateUniqueCouponCode = async () => {
 // API 1: Generate Coupon
 // POST /api/admin/coupons/generate
 // Body: { type: "semester1"|"semester2"|"full_year", graded: "gradeId", expiryDate: "YYYY-MM-DD" }
-exports.generateCoupon = async (req, res, next) => {
+exports.generateCoupon = async (req, res) => {
+  // Removed 'next' from parameters
   try {
     const { type, graded, expiryDate } = req.body;
 
@@ -72,13 +73,19 @@ exports.generateCoupon = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error generating coupon:", error);
-    next(error); // Pass error to error handling middleware
+    // Handle error directly without 'next'
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while generating coupon.",
+      error: error.message,
+    });
   }
 };
 
 // API 2: Return all coupons with their type
 // GET /api/admin/coupons
-exports.getAllCoupons = async (req, res, next) => {
+exports.getAllCoupons = async (req, res) => {
+  // Removed 'next' from parameters
   try {
     const coupons = await Code.findAll({
       attributes: { exclude: ["createdAt", "updatedAt"] }, // Exclude timestamps if not needed
@@ -91,13 +98,19 @@ exports.getAllCoupons = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error fetching coupons:", error);
-    next(error);
+    // Handle error directly without 'next'
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching coupons.",
+      error: error.message,
+    });
   }
 };
 
 // API 3: Return child count, parent count, grade count, subject count
 // GET /api/admin/dashboard/counts
-exports.getDashboardCounts = async (req, res, next) => {
+exports.getDashboardCounts = async (req, res) => {
+  // Removed 'next' from parameters
   try {
     const childCount = await Child.count();
     // Assuming 'parent' role is stored in the User model
@@ -116,14 +129,20 @@ exports.getDashboardCounts = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error fetching dashboard counts:", error);
-    next(error);
+    // Handle error directly without 'next'
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching dashboard counts.",
+      error: error.message,
+    });
   }
 };
 
 // API 4: Add New Subject
 // POST /api/admin/subjects
 // Body: { name: "New Subject Name" }
-exports.addSubject = async (req, res, next) => {
+exports.addSubject = async (req, res) => {
+  // Removed 'next' from parameters
   try {
     const { name } = req.body;
 
@@ -155,14 +174,20 @@ exports.addSubject = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error adding subject:", error);
-    next(error);
+    // Handle error directly without 'next'
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while adding subject.",
+      error: error.message,
+    });
   }
 };
 
 // API 5: Add New Material Item
 // POST /api/admin/materials
 // Body: { type: "youtube"|"pdf"|..., title: "Material Title", url: "http://example.com", gradeId: "gradeId", semester: "semester1"|"semester2", cardId: 123 }
-exports.addMaterial = async (req, res, next) => {
+exports.addMaterial = async (req, res) => {
+  // Removed 'next' from parameters
   try {
     const { type, title, url, gradeId, semester, cardId } = req.body;
 
@@ -228,9 +253,11 @@ exports.addMaterial = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error adding material item:", error);
-    next(error);
+    // Handle error directly without 'next'
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while adding material item.",
+      error: error.message,
+    });
   }
 };
-//  { type: "semester1"|"semester2"|"full_year", graded: "gradeId", expiryDate: "YYYY-MM-DD" }
-// give me json to put in postman for this api : 
-// POST /api/admin/coupons/generate
