@@ -9,7 +9,7 @@ const {
   MaterialItem,
 } = require("../models");
 const crypto = require("crypto"); // For generating unique coupon codes
-const { Op } = require("sequelize"); // For Sequelize operators like Op.ne
+const { Op, Sequelize } = require("sequelize");  // <- أضف Sequelize هنا
 
 // Helper to generate a unique coupon code
 const generateUniqueCouponCode = async () => {
@@ -153,9 +153,11 @@ exports.addSubject = async (req, res) => {
     }
 
     const existingSubject = await Subject.findOne({
-      where: {
-        name: { [Op.iLike]: name }, // Case-insensitive check
-      },
+      where: Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("name")),
+          "LIKE",
+          name.toLowerCase()
+      ),
     });
 
     if (existingSubject) {
