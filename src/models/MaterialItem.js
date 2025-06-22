@@ -10,11 +10,15 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     gradeId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
     },
     semester: {
       type: DataTypes.ENUM("semester1", "semester2"),
+      allowNull: false,
+    },
+    cardId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   });
