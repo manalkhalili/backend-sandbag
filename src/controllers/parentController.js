@@ -4,7 +4,6 @@ const semesterInfo = {
   semester1: "الفصل الدراسي الأول",
   semester2: "الفصل الدراسي الثاني"
 };
-
 exports.getMyChildren = async (req, res, next) => {
   try {
     const parentId = req.user.id;
