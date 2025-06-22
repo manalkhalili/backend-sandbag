@@ -1,5 +1,9 @@
 const { Child, User, Code, Grade } = require("../models");
 const bcrypt = require("bcryptjs");
+const semesterInfo = {
+  semester1: "الفصل الدراسي الأول",
+  semester2: "الفصل الدراسي الثاني"
+};
 
 exports.getMyChildren = async (req, res, next) => {
   try {
