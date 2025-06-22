@@ -30,16 +30,16 @@ exports.addChild = async (req, res) => {
     const parentId = req.user.id;
 
     if (
-      !childName ||
-      !childPassword ||
-      !gradeId ||
-      !currentSemester ||
-      !couponCode
+        !childName ||
+        !childPassword ||
+        !gradeId ||
+        !currentSemester ||
+        !couponCode
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "All fields are required: childName, childPassword, gradeId, currentSemester, couponCode.",
+            "All fields are required: childName, childPassword, gradeId, currentSemester, couponCode.",
       });
     }
 
@@ -47,7 +47,7 @@ exports.addChild = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Invalid semester. Allowed values are 'semester1' or 'semester2'.",
+            "Invalid semester. Allowed values are 'semester1' or 'semester2'.",
       });
     }
 
@@ -102,7 +102,7 @@ exports.addChild = async (req, res) => {
     const subscriptionStartDate = new Date();
     const subscriptionEndDate = new Date();
     subscriptionEndDate.setMonth(
-      subscriptionEndDate.getMonth() + coupon.duration
+        subscriptionEndDate.getMonth() + coupon.duration
     );
     let avatarUrl = "";
     if (gender == "male") avatarUrl = "./assets/boyAvatar.png";
@@ -211,8 +211,8 @@ exports.editChild = async (req, res) => {
     await child.userAccount.update(updatesToUser);
 
     if (
-      currentSemester &&
-      !["semester1", "semester2"].includes(currentSemester)
+        currentSemester &&
+        !["semester1", "semester2"].includes(currentSemester)
     ) {
       return res.status(400).json({
         success: false,
