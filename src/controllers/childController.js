@@ -1,9 +1,6 @@
 const { Child, Subject, Card, MaterialItem, Grade } = require("../models");
 const { Op } = require("sequelize");
-const semesterInfo = {
-  semester1: "الفصل الدراسي الأول",
-  semester2: "الفصل الدراسي الثاني"
-};
+
 exports.getDashboard = async (req, res) => {
   try {
     const { childId } = req.user.id;
