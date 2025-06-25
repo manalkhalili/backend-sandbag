@@ -21,6 +21,12 @@ router.get("/dashboard/counts", adminController.getDashboardCounts);
 // API 4: Add New Subject
 router.post("/subjects", adminController.addSubject);
 
+// NEW ADMIN ENDPOINT: Get All Subjects
+router.get("/subjects", adminController.getAllSubjects); // This will list all subjects
+
+// NEW ADMIN ENDPOINT: Get Cards by Subject ID
+router.get("/subjects/:subjectId/cards", adminController.getCardsBySubjectId); // This will list all cards for a specific subject because the admin needs to manage cards as well
+
 // API 5: Add New Material Item
 router.post("/materials", adminController.addMaterial);
 

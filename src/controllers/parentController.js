@@ -6,11 +6,69 @@ const semesterInfo = {
 };
 exports.getMyChildren = async (req, res, next) => {
   try {
-    const parentId = req.user.id;
-    const children = await Child.findAll({ where: { parentId: parentId } });
-    res.json(children);
+    const parentId = req.user.id; // Authenticated parent's ID
+
+    const children = await Child.findAll({
+      where: { parentId: parentId },
+      include: [
+        {
+          model: User, // Include the User model for parent details
+          as: "parent", // Use the specific alias 'parent' defined in Child.belongsTo
+          attributes: ["name", "email", "phone"], // Select desired parent attributes
+        },
+        {
+          model: Code, // Include the Code model for coupon details
+          as: "assignedCoupon", // Use the specific alias 'assignedCoupon' defined in Child.hasOne
+          attributes: [
+            "code",
+            "type",
+            "duration",
+            "isUsed",
+            "usedAt",
+            "applyDate",
+            "expiryDate",
+          ], // Select all desired coupon attributes
+          required: false, // Use 'false' for LEFT JOIN, so children without a coupon are still returned
+        },
+        {
+          model: Grade, // Include the Grade model for grade name
+          attributes: ["name"], // Assuming 'name' is the relevant field for grade
+          required: true, // Child must have a grade, so INNER JOIN is appropriate
+        },
+      ],
+    });
+
+    // Format the response for cleaner output
+    const formattedChildren = children.map((child) => {
+      const childData = child.toJSON(); // Convert Sequelize instance to plain JSON object
+
+      return {
+        id: childData.id,
+        name: childData.name,
+        profileImage: childData.profileImage,
+        birthDate: childData.birthDate,
+        city: childData.city,
+        // The parent details are directly available via the 'parent' alias
+        parentId: childData.parentId,
+        parentName: childData.parent ? childData.parent.name : null,
+        parentEmail: childData.parent ? childData.parent.email : null,
+        parentPhone: childData.parent ? childData.parent.phone : null,
+        // Grade details
+        grade: childData.Grade ? childData.Grade.name : null, // Access grade name via direct model name (default alias)
+        // Subscription details
+        currentSemester: childData.currentSemester,
+        subscriptionType: childData.subscriptionType,
+        subscriptionStartDate: childData.subscriptionStartDate,
+        subscriptionEndDate: childData.subscriptionEndDate,
+        // Coupon details are available via the 'assignedCoupon' alias
+        coupon: childData.assignedCoupon || null, // Will be null if no coupon is assigned
+      };
+    });
+
+    res.json({ success: true, data: formattedChildren });
   } catch (err) {
-    next(err);
+    console.error("Error in getMyChildren:", err); // Log the error for debugging
+    next(err); // Pass error to the Express error handling middleware
   }
 };
 
@@ -68,6 +126,12 @@ exports.addChild = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Coupon not found or already used. Please use a valid coupon.",
+      });
+    }
+    if (coupon.isUsed) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon has already been used.",
       });
     }
 
