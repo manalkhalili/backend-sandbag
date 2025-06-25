@@ -23,6 +23,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    resetPasswordToken: {
+      type: DataTypes.STRING, // Or TEXT if you expect very long tokens
+      allowNull: true, // Should be nullable as it's only set during reset
+    },
+    resetPasswordExpires: {
+      type: DataTypes.DATE,
+      allowNull: true, // Should be nullable
+    },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,
   });
