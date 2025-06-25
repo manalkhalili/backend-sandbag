@@ -125,6 +125,12 @@ exports.addChild = async (req, res) => {
         message: "Coupon not found or already used. Please use a valid coupon.",
       });
     }
+    if (coupon.isUsed) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon has already been used.",
+      });
+    }
 
     if (coupon.expiryDate && new Date() > coupon.expiryDate) {
       return res.status(400).json({
