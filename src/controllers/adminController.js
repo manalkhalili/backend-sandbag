@@ -261,3 +261,72 @@ exports.addMaterial = async (req, res) => {
     });
   }
 };
+
+// NEW CONTROLLER FUNCTION: Get All Subjects for Admin
+// GET /api/admin/subjects
+exports.getAllSubjects = async (req, res) => {
+  try {
+    const subjects = await Subject.findAll({
+      attributes: ["id", "name"], // Only fetch ID and name
+      order: [["name", "ASC"]],
+    });
+
+    res.json({
+      success: true,
+      data: subjects,
+    });
+  } catch (error) {
+    console.error("Error fetching all subjects for admin:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching subjects.",
+      error: error.message,
+    });
+  }
+};
+
+// NEW CONTROLLER FUNCTION: Get Cards by Subject ID for Admin
+// GET /api/admin/subjects/:subjectId/cards
+exports.getCardsBySubjectId = async (req, res) => {
+  try {
+    const { subjectId } = req.params;
+
+    // Validate if subjectId is a valid number
+    if (isNaN(subjectId) || parseInt(subjectId) <= 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid subject ID provided." });
+    }
+
+    const subject = await Subject.findByPk(subjectId);
+    if (!subject) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Subject not found." });
+    }
+
+    const cards = await Card.findAll({
+      where: { subjectId: subjectId },
+      attributes: ["id", "title"], // Only fetch ID and title
+      order: [["title", "ASC"]],
+    });
+
+    res.json({
+      success: true,
+      data: {
+        subject: { id: subject.id, name: subject.name },
+        cards: cards,
+      },
+    });
+  } catch (error) {
+    console.error(
+      `Error fetching cards for subject ${req.params.subjectId} for admin:`,
+      error
+    );
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching cards for subject.",
+      error: error.message,
+    });
+  }
+};
