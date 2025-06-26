@@ -167,7 +167,7 @@ exports.addChild = async (req, res) => {
     );
     let avatarUrl = "";
     if (gender == "male") avatarUrl = "./assets/boyAvatar.png";
-    else if ((gender = "female")) avatarUrl = "./assets/girlAvatar.png";
+    else if (gender === "female") avatarUrl = "./assets/girlAvatar.png";
 
     const child = await Child.create({
       name: childName,
@@ -206,7 +206,19 @@ exports.addChild = async (req, res) => {
         },
       ],
     });
-
+    const semesterInfo = {
+      semester1: {
+        name: "First Semester",
+        durationMonths: 4,
+        description: "Covers the first four months of the academic year.",
+      },
+      semester2: {
+        name: "Second Semester",
+        durationMonths: 4,
+        description: "Covers the next four months of the academic year.",
+      },
+      // You can add more details specific to each semester here if needed
+    };
     res.status(201).json({
       success: true,
       message: "Added child successfully",
