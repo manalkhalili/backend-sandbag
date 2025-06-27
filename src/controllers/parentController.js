@@ -64,8 +64,8 @@ exports.getMyChildren = async (req, res, next) => {
 
     res.json({ success: true, data: formattedChildren });
   } catch (err) {
-    console.error("Error in getMyChildren:", err); // Log the error for debugging
-    next(err); // Pass error to the Express error handling middleware
+    console.error("Error in getMyChildren:", err);
+    next(err);
   }
 };
 
@@ -244,7 +244,8 @@ exports.addChild = async (req, res) => {
   }
 };
 
-exports.editChild = async (req, res) => {
+exports.editChild = async (req, res, next) => {
+  // Added 'next' for consistency with error handling
   try {
     const parentId = req.user.id;
     const childId = req.params.childId;
@@ -257,11 +258,21 @@ exports.editChild = async (req, res) => {
       birthDate,
       city,
       gender,
+      profileImage, // <-- Added profileImage
+      newCouponCode, // <-- Added for changing/assigning a new coupon
     } = req.body;
 
-    const child = await Child.findOne({
+    const child = await req.app.locals.models.Child.findOne({
+      // Corrected model access
       where: { id: childId, parentId },
-      include: [{ model: User, as: "userAccount" }],
+      include: [
+        { model: req.app.locals.models.User, as: "userAccount" },
+        {
+          model: req.app.locals.models.Code,
+          as: "assignedCoupon",
+          required: false,
+        }, // Include assigned coupon
+      ],
     });
 
     if (!child) {
@@ -271,17 +282,47 @@ exports.editChild = async (req, res) => {
       });
     }
 
+    // --- Update Child's User Account ---
     const updatesToUser = {};
-    if (childName) {
+    let childUsername = child.userAccount.username; // Keep track of current username
+    if (childName && childName !== child.userAccount.name) {
       updatesToUser.name = childName;
+      // If childName changes, update username for consistency (lowercase)
       updatesToUser.username = childName.toLowerCase();
+      childUsername = childName.toLowerCase(); // Update variable for response
     }
-    if (gender) updatesToUser.gender = gender;
+    if (gender && gender !== child.userAccount.gender) {
+      updatesToUser.gender = gender;
+    }
     if (childPassword) {
+      // Only update password if provided
       const hashedPassword = await bcrypt.hash(childPassword, 12);
       updatesToUser.password = hashedPassword;
     }
-    await child.userAccount.update(updatesToUser);
+
+    if (Object.keys(updatesToUser).length > 0) {
+      await child.userAccount.update(updatesToUser);
+    }
+
+    // --- Update Child's Profile Image, Grade, Semester, BirthDate, City ---
+    const updatesToChild = {};
+    if (childName && childName !== child.name) updatesToChild.name = childName;
+    if (
+      birthDate &&
+      new Date(birthDate).toISOString() !== child.birthDate.toISOString()
+    )
+      updatesToChild.birthDate = birthDate; // Compare ISO strings for dates
+    if (city && city !== child.city) updatesToChild.city = city;
+    // Handle profileImage update
+    if (profileImage && profileImage !== child.profileImage) {
+      updatesToChild.profileImage = profileImage;
+    } else if (gender && gender !== child.userAccount.gender) {
+      // If gender changed and no explicit profileImage, update based on gender
+      updatesToChild.profileImage =
+        gender === "male"
+          ? "./assets/boyAvatar.png"
+          : "./assets/girlAvatar.png";
+    }
 
     if (
       currentSemester &&
@@ -292,23 +333,114 @@ exports.editChild = async (req, res) => {
         message: "Invalid semester. Allowed: 'semester1' or 'semester2'.",
       });
     }
+    if (currentSemester && currentSemester !== child.currentSemester)
+      updatesToChild.currentSemester = currentSemester;
 
     if (gradeId) {
-      const grade = await Grade.findByPk(gradeId);
+      const grade = await req.app.locals.models.Grade.findByPk(gradeId); // Corrected model access
       if (!grade) {
         return res.status(400).json({
           success: false,
-          message: "Grade not found.",
+          message: "Grade not found. Please provide a valid grade ID.",
         });
+      }
+      if (gradeId !== child.graded) updatesToChild.graded = gradeId;
+    }
+
+    if (Object.keys(updatesToChild).length > 0) {
+      await child.update(updatesToChild);
+    }
+
+    // --- Handle Coupon Change/Assignment ---
+    if (newCouponCode) {
+      // 1. Find the new coupon
+      const newCoupon = await req.app.locals.models.Code.findOne({
+        // Corrected model access
+        where: { code: newCouponCode },
+      });
+
+      if (!newCoupon) {
+        return res.status(404).json({
+          success: false,
+          message: "New coupon not found. Please provide a valid coupon code.",
+        });
+      }
+      if (newCoupon.isUsed) {
+        return res.status(400).json({
+          success: false,
+          message: "New coupon has already been used.",
+        });
+      }
+      if (newCoupon.expiryDate && new Date() > newCoupon.expiryDate) {
+        return res.status(400).json({
+          success: false,
+          message: "New coupon has expired.",
+        });
+      }
+
+      // If the child already has an assigned coupon, you might want to "release" it
+      // or simply overwrite it. Overwriting is simpler for this case.
+      // If the new coupon is the same as the existing one, do nothing
+      if (child.assignedCoupon && child.assignedCoupon.code === newCouponCode) {
+        // No change needed
+      } else {
+        // 2. Assign the new coupon to the child
+        await child.setAssignedCoupon(newCoupon); // Sequelize association setter
+        child.subscriptionType = newCoupon.type; // Update child's subscription based on new coupon
+
+        // Update subscription dates based on new coupon duration
+        const subscriptionStartDate = new Date();
+        const subscriptionEndDate = new Date();
+        subscriptionEndDate.setMonth(
+          subscriptionEndDate.getMonth() + newCoupon.duration
+        );
+        child.subscriptionStartDate = subscriptionStartDate;
+        child.subscriptionEndDate = subscriptionEndDate;
+        child.isSubscriptionActive = true; // Assume new coupon means active subscription
+
+        await child.save(); // Save the child model to persist subscription updates
+
+        // 3. Mark the new coupon as used
+        await newCoupon.update({
+          isUsed: true,
+          usedAt: new Date(),
+          userId: parentId, // Parent is using it
+          childId: child.id,
+        });
+
+        // 4. Optionally: If the old coupon was unique to this child,
+        // and you wanted to "free it up" (unlikely for a used coupon,
+        // but if your logic allows reusing expired coupons or similar scenarios)
+        // you'd update child.assignedCoupon (if exists) here to remove childId/userId if needed.
+        // For a coupon that was already used by this child, you likely don't need to do anything with the old one.
       }
     }
 
-    await child.update({
-      name: childName || child.name,
-      graded: gradeId || child.graded,
-      currentSemester: currentSemester || child.currentSemester,
-      birthDate: birthDate || child.birthDate,
-      city: city || child.city,
+    // Reload the child with updated associations to send current data
+    const updatedChild = await req.app.locals.models.Child.findByPk(child.id, {
+      include: [
+        {
+          model: req.app.locals.models.User,
+          as: "userAccount",
+          attributes: ["id", "name", "username"],
+        },
+        {
+          model: req.app.locals.models.Code,
+          as: "assignedCoupon",
+          attributes: [
+            "code",
+            "type",
+            "duration",
+            "isUsed",
+            "usedAt",
+            "applyDate",
+            "expiryDate",
+            "graded",
+          ],
+          required: false,
+        },
+        { model: req.app.locals.models.Grade, attributes: ["id", "name"] },
+      ],
     });
 
     res.json({
@@ -316,21 +448,14 @@ exports.editChild = async (req, res) => {
       message: "Child updated successfully",
       data: {
         child: {
-          ...child.toJSON(),
-          user: {
-            id: child.userAccount.id,
-            name: child.userAccount.name,
-            username: child.userAccount.username,
-          },
+          ...updatedChild.toJSON(),
+          username: updatedChild.userAccount.username, // Include username directly for clarity
+          // Password is NOT returned
         },
       },
     });
   } catch (error) {
     console.error("Error updating child:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error while updating child.",
-      error: error.message,
-    });
+    next(error); // Pass error to your general error handler
   }
 };

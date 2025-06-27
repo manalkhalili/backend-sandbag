@@ -1,7 +1,14 @@
 module.exports = (sequelize, DataTypes) => {
   const MaterialItem = sequelize.define("MaterialItem", {
     type: {
-      type: DataTypes.ENUM("youtube", "pdf", "ppt", "link", "assignment"),
+      type: DataTypes.ENUM(
+        "youtube",
+        "pdf",
+        "ppt",
+        "link",
+        "assignment",
+        "game"
+      ),
       allowNull: false,
     },
     title: DataTypes.STRING,
