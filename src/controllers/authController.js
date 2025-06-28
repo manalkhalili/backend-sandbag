@@ -79,7 +79,7 @@ exports.signin = async (req, res) => {
       }
 
       user = await User.findOne({ where: { username, role: "child" } });
-    } else if (role === "parent" || role == "admin") {
+    } else if (role === "parent" || role == "admin" ) {
       if (!email) {
         return res.status(400).json({
           success: false,
@@ -91,7 +91,7 @@ exports.signin = async (req, res) => {
     } else {
       return res.status(400).json({
         success: false,
-        message: "Invalid role. Allowed roles: child, parent",
+        message: "Invalid role. Allowed roles: child, parent, admin",
       });
     }
 

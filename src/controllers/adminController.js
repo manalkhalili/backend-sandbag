@@ -11,6 +11,7 @@ const {
 const crypto = require("crypto");
 const { Op } = require("sequelize");
 
+
 // Helper to generate a unique coupon code
 const generateUniqueCouponCode = async () => {
   let code;
@@ -144,7 +145,7 @@ exports.addSubject = async (req, res) => {
       where: {
         name: { [Op.iLike]: name },
       },
-    });
+
 
     if (existingSubject) {
       return res.status(409).json({
