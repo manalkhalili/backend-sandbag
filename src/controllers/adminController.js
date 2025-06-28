@@ -5,21 +5,20 @@ const {
   Code,
   Grade,
   Subject,
-  Card,
+  Card, // <--- Ensure Card model is imported
   MaterialItem,
 } = require("../models");
-const crypto = require("crypto"); // For generating unique coupon codes
-const { Op } = require("sequelize"); // For Sequelize operators like Op.ne
+const crypto = require("crypto");
+const { Op } = require("sequelize");
 
 // Helper to generate a unique coupon code
 const generateUniqueCouponCode = async () => {
   let code;
   let existingCoupon;
   do {
-    // Generate a random 8-character alphanumeric code
     code = crypto.randomBytes(4).toString("hex").toUpperCase();
     existingCoupon = await Code.findByPk(code);
-  } while (existingCoupon); // Keep generating until a unique code is found
+  } while (existingCoupon);
   return code;
 };
 
@@ -27,7 +26,6 @@ const generateUniqueCouponCode = async () => {
 // POST /api/admin/coupons/generate
 // Body: { type: "semester1"|"semester2"|"full_year", graded: "gradeId", expiryDate: "YYYY-MM-DD" }
 exports.generateCoupon = async (req, res) => {
-  // Removed 'next' from parameters
   try {
     const { type, graded, expiryDate } = req.body;
 
@@ -45,7 +43,6 @@ exports.generateCoupon = async (req, res) => {
       });
     }
 
-    // Validate if the grade exists
     const grade = await Grade.findByPk(graded);
     if (!grade) {
       return res.status(404).json({
@@ -56,14 +53,12 @@ exports.generateCoupon = async (req, res) => {
 
     const couponCode = await generateUniqueCouponCode();
 
-    // The 'beforeCreate' hook in the Code model will set the duration based on the type
     const newCoupon = await Code.create({
       code: couponCode,
       type: type,
       graded: graded,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
-      isUsed: false, // Default to false
-      // userId and childId will be null initially, set upon usage
+      isUsed: false,
     });
 
     res.status(201).json({
@@ -73,7 +68,6 @@ exports.generateCoupon = async (req, res) => {
     });
   } catch (error) {
     console.error("Error generating coupon:", error);
-    // Handle error directly without 'next'
     res.status(500).json({
       success: false,
       message: "Internal server error while generating coupon.",
@@ -85,10 +79,9 @@ exports.generateCoupon = async (req, res) => {
 // API 2: Return all coupons with their type
 // GET /api/admin/coupons
 exports.getAllCoupons = async (req, res) => {
-  // Removed 'next' from parameters
   try {
     const coupons = await Code.findAll({
-      attributes: { exclude: ["createdAt", "updatedAt"] }, // Exclude timestamps if not needed
+      attributes: { exclude: ["createdAt", "updatedAt"] },
       order: [["createdAt", "DESC"]],
     });
 
@@ -98,7 +91,6 @@ exports.getAllCoupons = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching coupons:", error);
-    // Handle error directly without 'next'
     res.status(500).json({
       success: false,
       message: "Internal server error while fetching coupons.",
@@ -110,10 +102,8 @@ exports.getAllCoupons = async (req, res) => {
 // API 3: Return child count, parent count, grade count, subject count
 // GET /api/admin/dashboard/counts
 exports.getDashboardCounts = async (req, res) => {
-  // Removed 'next' from parameters
   try {
     const childCount = await Child.count();
-    // Assuming 'parent' role is stored in the User model
     const parentCount = await User.count({ where: { role: "parent" } });
     const gradeCount = await Grade.count();
     const subjectCount = await Subject.count();
@@ -129,7 +119,6 @@ exports.getDashboardCounts = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching dashboard counts:", error);
-    // Handle error directly without 'next'
     res.status(500).json({
       success: false,
       message: "Internal server error while fetching dashboard counts.",
@@ -142,7 +131,6 @@ exports.getDashboardCounts = async (req, res) => {
 // POST /api/admin/subjects
 // Body: { name: "New Subject Name" }
 exports.addSubject = async (req, res) => {
-  // Removed 'next' from parameters
   try {
     const { name } = req.body;
 
@@ -154,7 +142,7 @@ exports.addSubject = async (req, res) => {
 
     const existingSubject = await Subject.findOne({
       where: {
-        name: { [Op.iLike]: name }, // Case-insensitive check
+        name: { [Op.iLike]: name },
       },
     });
 
@@ -167,17 +155,37 @@ exports.addSubject = async (req, res) => {
 
     const newSubject = await Subject.create({ name });
 
+    // --- NEW LOGIC: Automatically create 5 cards for the new subject ---
+    const defaultCardNames = [
+      "عروض تقديمية", // Presentations
+      "كروت تعليمية", // Educational Cards
+      "فيديوهات تعليمية", // Educational Videos
+      "العاب تعليمية", // Educational Games
+      "خرائط ذهنية", // Mind Maps
+    ];
+
+    const cardsToCreate = defaultCardNames.map((cardName) => ({
+      title: cardName,
+      subjectId: newSubject.id, // Link cards to the newly created subject
+    }));
+
+    // Use bulkCreate for efficiency to create all cards at once
+    const createdCards = await Card.bulkCreate(cardsToCreate);
+    // --- END NEW LOGIC ---
+
     res.status(201).json({
       success: true,
-      message: "Subject added successfully.",
-      data: newSubject,
+      message: "Subject added successfully and default cards created.",
+      data: {
+        subject: newSubject,
+        defaultCards: createdCards, // Optionally return the created cards in the response
+      },
     });
   } catch (error) {
-    console.error("Error adding subject:", error);
-    // Handle error directly without 'next'
+    console.error("Error adding subject or default cards:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while adding subject.",
+      message: "Internal server error while adding subject or default cards.",
       error: error.message,
     });
   }
@@ -187,11 +195,9 @@ exports.addSubject = async (req, res) => {
 // POST /api/admin/materials
 // Body: { type: "youtube"|"pdf"|..., title: "Material Title", url: "http://example.com", gradeId: "gradeId", semester: "semester1"|"semester2", cardId: 123 }
 exports.addMaterial = async (req, res) => {
-  // Removed 'next' from parameters
   try {
     const { type, title, url, gradeId, semester, cardId } = req.body;
 
-    // Basic validation for required fields
     if (!type || !title || !url || !gradeId || !semester || !cardId) {
       return res.status(400).json({
         success: false,
@@ -200,8 +206,14 @@ exports.addMaterial = async (req, res) => {
       });
     }
 
-    // Validate material type (assuming MaterialItem model defines these enums)
-    const validMaterialTypes = ["youtube", "pdf", "ppt", "link", "assignment"];
+    const validMaterialTypes = [
+      "youtube",
+      "pdf",
+      "ppt",
+      "link",
+      "assignment",
+      "game",
+    ]; // Updated here as well for consistency
     if (!validMaterialTypes.includes(type)) {
       return res.status(400).json({
         success: false,
@@ -211,7 +223,6 @@ exports.addMaterial = async (req, res) => {
       });
     }
 
-    // Validate semester type
     if (!["semester1", "semester2"].includes(semester)) {
       return res.status(400).json({
         success: false,
@@ -219,7 +230,6 @@ exports.addMaterial = async (req, res) => {
       });
     }
 
-    // Validate if gradeId exists
     const grade = await Grade.findByPk(gradeId);
     if (!grade) {
       return res.status(404).json({
@@ -228,7 +238,6 @@ exports.addMaterial = async (req, res) => {
       });
     }
 
-    // Validate if cardId exists
     const card = await Card.findByPk(cardId);
     if (!card) {
       return res.status(404).json({
@@ -253,7 +262,6 @@ exports.addMaterial = async (req, res) => {
     });
   } catch (error) {
     console.error("Error adding material item:", error);
-    // Handle error directly without 'next'
     res.status(500).json({
       success: false,
       message: "Internal server error while adding material item.",
@@ -267,7 +275,7 @@ exports.addMaterial = async (req, res) => {
 exports.getAllSubjects = async (req, res) => {
   try {
     const subjects = await Subject.findAll({
-      attributes: ["id", "name"], // Only fetch ID and name
+      attributes: ["id", "name"],
       order: [["name", "ASC"]],
     });
 
@@ -291,7 +299,6 @@ exports.getCardsBySubjectId = async (req, res) => {
   try {
     const { subjectId } = req.params;
 
-    // Validate if subjectId is a valid number
     if (isNaN(subjectId) || parseInt(subjectId) <= 0) {
       return res
         .status(400)
@@ -307,7 +314,7 @@ exports.getCardsBySubjectId = async (req, res) => {
 
     const cards = await Card.findAll({
       where: { subjectId: subjectId },
-      attributes: ["id", "title"], // Only fetch ID and title
+      attributes: ["id", "title"],
       order: [["title", "ASC"]],
     });
 
