@@ -4,14 +4,14 @@ const { generateToken } = require("../utils/jwt");
 const { User } = require("../models");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
-const { Op } = require("sequelize");
 
+// تسجيل حساب جديد
 exports.signup = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
-      message: "Validation failed",
+      message: "فشل التحقق من البيانات",
       errors: errors.array(),
     });
   }
@@ -23,7 +23,7 @@ exports.signup = async (req, res) => {
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "Email already in use",
+        message: "البريد الإلكتروني مستخدم بالفعل",
       });
     }
 
@@ -40,27 +40,28 @@ exports.signup = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "User created successfully",
+      message: "تم إنشاء المستخدم بنجاح",
       data: {
         token,
         userId: newUser.id,
       },
     });
   } catch (error) {
-    console.error("Signup error:", error);
+    console.error("خطأ في انشاء الحساب", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "خطأ داخلي في الخادم",
     });
   }
 };
 
+// تسجيل الدخول
 exports.signin = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
-      message: "Validation failed",
+      message: "فشل التحقق من صحة البيانات",
       errors: errors.array(),
     });
   }
@@ -74,31 +75,31 @@ exports.signin = async (req, res) => {
       if (!username) {
         return res.status(400).json({
           success: false,
-          message: "Username is required for child login",
+          message: "اسم المستخدم مطلوب لتسجيل دخول الطفل",
         });
       }
 
       user = await User.findOne({ where: { username, role: "child" } });
-    } else if (role === "parent" || role == "admin" ) {
+    } else if (role === "parent" || role === "admin") {
       if (!email) {
         return res.status(400).json({
           success: false,
-          message: "Email is required for parent login",
+          message: "البريد الإلكتروني مطلوب لتسجيل الدخول",
         });
       }
 
-      user = await User.findOne({ where: { email, role: role } });
+      user = await User.findOne({ where: { email, role } });
     } else {
       return res.status(400).json({
         success: false,
-        message: "Invalid role. Allowed roles: child, parent, admin",
+        message: "الدور غير صالح. الأدوار المسموح بها: طفل، أب، مسؤول",
       });
     }
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message: "المستخدم غير موجود",
       });
     }
 
@@ -107,7 +108,7 @@ exports.signin = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: "بيانات الدخول غير صحيحة",
       });
     }
 
@@ -115,7 +116,7 @@ exports.signin = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Login successful",
+      message: "تم تسجيل الدخول بنجاح",
       data: {
         token,
         userId: user.id,
@@ -126,15 +127,20 @@ exports.signin = async (req, res) => {
     console.error("Signin error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "خطأ داخلي في الخادم",
     });
   }
 };
 
+// إرسال كود إعادة تعيين كلمة المرور
 exports.forgotPassword = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({
+      success: false,
+      message: "فشل التحقق من البيانات",
+      errors: errors.array(),
+    });
   }
 
   try {
@@ -143,44 +149,52 @@ exports.forgotPassword = async (req, res) => {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found with this email" });
+      return res.status(404).json({
+        success: false,
+        message: "لا يوجد مستخدم بهذا البريد الإلكتروني",
+      });
     }
 
     const resetToken = crypto.randomBytes(4).toString("hex");
 
-    const resetTokenExpiry = new Date(Date.now() + 3600000);
-
     await User.update(
-      {
-        resetPasswordToken: resetToken,
-        resetPasswordExpires: resetTokenExpiry,
-      },
-      { where: { id: user.id } }
+        {
+          resetPasswordToken: resetToken,
+          resetPasswordExpires: null,
+        },
+        { where: { id: user.id } }
     );
 
-    let message = `You requested a password reset. this is your reset token: ${resetToken}.
-Please use it within the next hour. If you did not request this, please ignore this email.`;
-    message += `\n\nIf you did not request this, please ignore this email.`;
+    const message = `${resetToken} \n\nاستخدمه لإعادة تعيين كلمة المرور الخاصة بك. إذا لم تطلب ذلك، يرجى تجاهل هذا البريد.`;
 
     await sendEmail({
       email: user.email,
-      subject: "Password Reset Request",
+      subject: "طلب إعادة تعيين كلمة المرور",
       message,
     });
 
-    res.json({ message: "Password reset email sent" });
+    return res.status(200).json({
+      success: true,
+      message: "تم إرسال بريد إعادة تعيين كلمة المرور",
+    });
   } catch (error) {
-    console.error("Forgot password error:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("خطأ في طلب نسيت كلمة المرور:", error);
+    return res.status(500).json({
+      success: false,
+      message: "خطأ في الخادم",
+    });
   }
 };
 
+// إعادة تعيين كلمة المرور
 exports.resetPassword = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({
+      success: false,
+      message: "فشل التحقق من البيانات",
+      errors: errors.array(),
+    });
   }
 
   try {
@@ -189,29 +203,37 @@ exports.resetPassword = async (req, res) => {
     const user = await User.findOne({
       where: {
         resetPasswordToken: token,
-        resetPasswordExpires: { [Op.gt]: Date.now() },
       },
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+      return res.status(400).json({
+        success: false,
+        message: "الرمز غير صالح أو منتهي الصلاحية",
+      });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     await User.update(
-      {
-        password: hashedPassword,
-        resetPasswordToken: null,
-        resetPasswordExpires: null,
-      },
-      { where: { id: user.id } }
+        {
+          password: hashedPassword,
+          resetPasswordToken: null,
+          resetPasswordExpires: null,
+        },
+        { where: { id: user.id } }
     );
 
-    res.json({ message: "Password has been reset successfully" });
+    return res.status(200).json({
+      success: true,
+      message: "تم إعادة تعيين كلمة المرور بنجاح",
+    });
   } catch (error) {
-    console.error("Reset password error:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("خطأ في إعادة تعيين كلمة المرور:", error);
+    return res.status(500).json({
+      success: false,
+      message: "خطأ في الخادم",
+    });
   }
 };

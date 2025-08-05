@@ -32,14 +32,14 @@ exports.generateCoupon = async (req, res) => {
     if (!type || !graded) {
       return res
         .status(400)
-        .json({ success: false, message: "Type and grade ID are required." });
+        .json({ success: false, message: "نوع واي دي الصف مطلوبان." });
     }
 
     if (!["semester1", "semester2", "full_year"].includes(type)) {
       return res.status(400).json({
         success: false,
         message:
-          "Invalid coupon type. Allowed: 'semester1', 'semester2', 'full_year'.",
+          "نوع القسيمة غير صالح. الأنواع المسموح بها: 'semester1', 'semester2', 'full_year'."
       });
     }
 
@@ -47,7 +47,7 @@ exports.generateCoupon = async (req, res) => {
     if (!grade) {
       return res.status(404).json({
         success: false,
-        message: "Grade not found. Please provide a valid grade ID.",
+        message: "الصف غير موجود. الرجاء تقديم اي دي صف صحيح",
       });
     }
 
@@ -63,14 +63,14 @@ exports.generateCoupon = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Coupon generated successfully.",
+      message: "تم إنشاء القسيمة بنجاح.",
       data: newCoupon,
     });
   } catch (error) {
-    console.error("Error generating coupon:", error);
+    console.error("خطأ أثناء إنشاء القسيمة:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while generating coupon.",
+      message: "خطأ داخلي في الخادم أثناء إنشاء القسيمة.",
       error: error.message,
     });
   }
@@ -90,10 +90,10 @@ exports.getAllCoupons = async (req, res) => {
       data: coupons,
     });
   } catch (error) {
-    console.error("Error fetching coupons:", error);
+    console.error("خطأ أثناء جلب القسائم:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while fetching coupons.",
+      message: "خطأ داخلي في الخادم أثناء جلب القسائم.",
       error: error.message,
     });
   }
@@ -118,10 +118,10 @@ exports.getDashboardCounts = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching dashboard counts:", error);
+    console.error("خطأ أثناء جلب إحصائيات لوحة التحكم:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while fetching dashboard counts.",
+      message: "خطأ داخلي في الخادم أثناء جلب إحصائيات لوحة التحكم.",
       error: error.message,
     });
   }
@@ -137,7 +137,7 @@ exports.addSubject = async (req, res) => {
     if (!name) {
       return res
         .status(400)
-        .json({ success: false, message: "Subject name is required." });
+        .json({ success: false, message: "اسم المادة مطلوب." });
     }
 
     const existingSubject = await Subject.findOne({
@@ -149,7 +149,7 @@ exports.addSubject = async (req, res) => {
     if (existingSubject) {
       return res.status(409).json({
         success: false,
-        message: "Subject with this name already exists.",
+        message: "المادة بهذا الاسم موجودة بالفعل.",
       });
     }
 
@@ -175,17 +175,17 @@ exports.addSubject = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Subject added successfully and default cards created.",
+      message: "تم إضافة المادة بنجاح وتم إنشاء البطاقات .",
       data: {
         subject: newSubject,
         defaultCards: createdCards, // Optionally return the created cards in the response
       },
     });
   } catch (error) {
-    console.error("Error adding subject or default cards:", error);
+    console.error("خطأ أثناء إضافة المادة أو البطاقات :", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while adding subject or default cards.",
+      message: "خطأ داخلي في الخادم أثناء إضافة المادة أو البطاقات.",
       error: error.message,
     });
   }
@@ -202,7 +202,7 @@ exports.addMaterial = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "All fields (type, title, url, gradeId, semester, cardId) are required.",
+          "جميع الحقول (النوع، العنوان، الرابط، اي دي الصف، الفصل الدراسي، اي دي البطاقة) مطلوبة",
       });
     }
 
@@ -217,7 +217,7 @@ exports.addMaterial = async (req, res) => {
     if (!validMaterialTypes.includes(type)) {
       return res.status(400).json({
         success: false,
-        message: `Invalid material type. Allowed: ${validMaterialTypes.join(
+        message: ` نوع المادة غير صالح. الأنواع المسموح بها: ${validMaterialTypes.join(
           ", "
         )}.`,
       });
@@ -234,7 +234,7 @@ exports.addMaterial = async (req, res) => {
     if (!grade) {
       return res.status(404).json({
         success: false,
-        message: "Grade not found. Please provide a valid grade ID.",
+        message: "الصف غير موجود. الرجاء تقديم اي دي صف صحيح.",
       });
     }
 
@@ -242,7 +242,7 @@ exports.addMaterial = async (req, res) => {
     if (!card) {
       return res.status(404).json({
         success: false,
-        message: "Card not found. Please provide a valid card ID.",
+        message: "البطاقة غير موجودة. الرجاء تقديم اي دي بطاقة صحيح.",
       });
     }
 
@@ -257,14 +257,14 @@ exports.addMaterial = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Material item added successfully.",
+      message: "تم إضافة مادة تعليمية بنجاح.",
       data: newMaterial,
     });
   } catch (error) {
-    console.error("Error adding material item:", error);
+    console.error("خطأ أثناء إضافة المادة التعليمية:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while adding material item.",
+      message: "خطأ داخلي في الخادم أثناء إضافة عنصر المادة.",
       error: error.message,
     });
   }
@@ -284,10 +284,10 @@ exports.getAllSubjects = async (req, res) => {
       data: subjects,
     });
   } catch (error) {
-    console.error("Error fetching all subjects for admin:", error);
+    console.error("خطأ أثناء جلب جميع المواد للمسؤول:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while fetching subjects.",
+      message: "خطأ داخلي في الخادم أثناء جلب المواد.",
       error: error.message,
     });
   }
@@ -302,14 +302,14 @@ exports.getCardsBySubjectId = async (req, res) => {
     if (isNaN(subjectId) || parseInt(subjectId) <= 0) {
       return res
         .status(400)
-        .json({ success: false, message: "Invalid subject ID provided." });
+        .json({ success: false, message: "اي دي المادة غير صالح." });
     }
 
     const subject = await Subject.findByPk(subjectId);
     if (!subject) {
       return res
         .status(404)
-        .json({ success: false, message: "Subject not found." });
+        .json({ success: false, message: "المادة غير موجودة." });
     }
 
     const cards = await Card.findAll({
@@ -332,7 +332,7 @@ exports.getCardsBySubjectId = async (req, res) => {
     );
     res.status(500).json({
       success: false,
-      message: "Internal server error while fetching cards for subject.",
+      message: "خطأ داخلي في الخادم أثناء جلب البطاقات الخاصة بالمادة.",
       error: error.message,
     });
   }

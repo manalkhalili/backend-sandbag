@@ -34,8 +34,8 @@ exports.getDashboard = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching dashboard:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("خطأ أثناء جلب لوحة التحكم:" , error);
+    res.status(500).json({ success: false, message: "خطأ في الخادم" });
   }
 };
 
@@ -49,7 +49,7 @@ async function getAuthenticatedChildProfile(req, res) {
   if (!childProfile) {
     res.status(404).json({
       success: false,
-      message: "Child profile not found for the authenticated user.",
+      message: "لم يتم العثور على ملف الطفل للمستخدم المصادق عليه.",
     });
     return null;
   }
@@ -65,10 +65,10 @@ exports.getAllSubjects = async (req, res) => {
     });
     res.json({ success: true, data: subjects });
   } catch (error) {
-    console.error("Error fetching all subjects:", error);
+    console.error("خطأ أثناء جلب جميع المواد:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while fetching subjects for dropdown.",
+      message: "خطأ داخلي في الخادم أثناء جلب المواد لقائمة الاختيار.",
       error: error.message,
     });
   }
@@ -87,7 +87,7 @@ exports.getSubjectCardsForChild = async (req, res) => {
     if (!subject) {
       return res
         .status(404)
-        .json({ success: false, message: "Subject not found." });
+        .json({ success: false, message: "المادة غير موجودة." });
     }
 
     const cards = await Card.findAll({
@@ -112,10 +112,10 @@ exports.getSubjectCardsForChild = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching subject cards for child:", error);
+    console.error("خطأ أثناء جلب بطاقات المادة للطفل:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while fetching cards.",
+      message: "خطأ داخلي في الخادم أثناء جلب البطاقات.",
       error: error.message,
     });
   }
@@ -137,7 +137,7 @@ exports.getCardMaterialsForChild = async (req, res) => {
     if (!card) {
       return res
         .status(404)
-        .json({ success: false, message: "Card not found." });
+        .json({ success: false, message: "البطاقة غير موجودة." });
     }
 
     const materials = await MaterialItem.findAll({
@@ -165,10 +165,10 @@ exports.getCardMaterialsForChild = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching card materials for child:", error);
+    console.error("خطأ أثناء جلب مواد البطاقة للطفل:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while fetching materials.",
+      message: "خطأ داخلي في الخادم أثناء جلب المواد.",
       error: error.message,
     });
   }

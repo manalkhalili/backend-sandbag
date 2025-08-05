@@ -67,7 +67,7 @@ exports.getMyChildren = async (req, res, next) => {
 
     res.json({ success: true, data: formattedChildren });
   } catch (err) {
-    console.error("Error in getMyChildren:", err);
+    console.error("خطأ في جلب أولادي:", err);
     next(err);
   }
 };
@@ -97,7 +97,7 @@ exports.addChild = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-            "All fields are required: childName, childPassword, gradeId, currentSemester, couponCode.",
+            "جميع الحقول مطلوبة: اسم الطفل، كلمة مرور الطفل، اي دي الصف، الفصل الدراسي الحالي، كود الكوبون.",
       });
     }
 
@@ -105,7 +105,7 @@ exports.addChild = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-            "Invalid semester. Allowed values are 'semester1' or 'semester2'.",
+            "الفصل الدراسي غير صالح. القيم المسموح بها هي 'semester1' أو 'semester2'.",
       });
     }
 
@@ -113,7 +113,7 @@ exports.addChild = async (req, res) => {
     if (!grade) {
       return res.status(404).json({
         success: false,
-        message: "Grade not found. Please provide a valid grade ID.",
+        message: "الصف غير موجود. الرجاء تقديم اي دي صف صحيح.",
       });
     }
     const coupon = await Code.findOne({
@@ -125,20 +125,20 @@ exports.addChild = async (req, res) => {
     if (!coupon) {
       return res.status(404).json({
         success: false,
-        message: "Coupon not found or already used. Please use a valid coupon.",
+        message: "الكوبون غير موجودة أو تم استخدامها مسبقًا. الرجاء استخدام كوبون صالح.",
       });
     }
     if (coupon.isUsed) {
       return res.status(400).json({
         success: false,
-        message: "Coupon has already been used.",
+        message: "تم استخدام الكوبون مسبقًا.",
       });
     }
 
     if (coupon.expiryDate && new Date() > coupon.expiryDate) {
       return res.status(400).json({
         success: false,
-        message: "Coupon has expired. Please use a valid coupon.",
+        message: "الكوبون منتهي الصلاحية. الرجاء استخدام كوبون صالح",
       });
     }
 
@@ -149,7 +149,7 @@ exports.addChild = async (req, res) => {
     if (existingChild) {
       return res.status(400).json({
         success: false,
-        message: "Name already exists. Please choose a different name.",
+        message: "الاسم موجود مسبقًا. الرجاء اختيار اسم مختلف.",
       });
     }
 
@@ -224,7 +224,7 @@ exports.addChild = async (req, res) => {
     };
     res.status(201).json({
       success: true,
-      message: "Added child successfully",
+      message: "تم إضافة الطفل بنجاح.",
       data: {
         child: {
           ...childWithDetails.toJSON(),
@@ -232,7 +232,7 @@ exports.addChild = async (req, res) => {
         },
         loginCredentials: {
           username: childUser.username,
-          message: "Use this username and password to log in.",
+          message: "استخدم اسم المستخدم وكلمة المرور  لتسجيل الدخول.",
           password: childPassword,
         },
       },
@@ -241,7 +241,7 @@ exports.addChild = async (req, res) => {
     console.error("Error adding child:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error while adding child.",
+      message: "خطأ داخلي في الخادم أثناء إضافة الطفل.",
       error: error.message,
     });
   }
@@ -281,7 +281,7 @@ exports.editChild = async (req, res, next) => {
     if (!child) {
       return res.status(404).json({
         success: false,
-        message: "Child not found or does not belong to this parent.",
+        message: "الطفل غير موجود أو لا ينتمي لهذا الوالد.",
       });
     }
 
@@ -333,7 +333,7 @@ exports.editChild = async (req, res, next) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid semester. Allowed: 'semester1' or 'semester2'.",
+        message: "الفصل الدراسي غير صالح. المسموح به: 'semester1' أو 'semester2'.",
       });
     }
     if (currentSemester && currentSemester !== child.currentSemester)
@@ -344,7 +344,7 @@ exports.editChild = async (req, res, next) => {
       if (!grade) {
         return res.status(400).json({
           success: false,
-          message: "Grade not found. Please provide a valid grade ID.",
+          message: "الصف غير موجود. الرجاء تقديم معرف صف صحيح." ,
         });
       }
       if (gradeId !== child.graded) updatesToChild.graded = gradeId;
@@ -365,19 +365,19 @@ exports.editChild = async (req, res, next) => {
       if (!newCoupon) {
         return res.status(404).json({
           success: false,
-          message: "New coupon not found. Please provide a valid coupon code.",
+          message: "الكوبون الجديد غير موجود. الرجاء تقديم كود كوبون صالح.",
         });
       }
       if (newCoupon.isUsed) {
         return res.status(400).json({
           success: false,
-          message: "New coupon has already been used.",
+          message: "الكوبون الجديد تم استخدامه مسبقًا.",
         });
       }
       if (newCoupon.expiryDate && new Date() > newCoupon.expiryDate) {
         return res.status(400).json({
           success: false,
-          message: "New coupon has expired.",
+          message: "الكوبون الجديد منتهي الصلاحية.",
         });
       }
 
@@ -448,7 +448,7 @@ exports.editChild = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: "Child updated successfully",
+      message: "تم تحديث بيانات الطفل بنجاح.",
       data: {
         child: {
           ...updatedChild.toJSON(),
@@ -458,7 +458,7 @@ exports.editChild = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error("Error updating child:", error);
+    console.error("خطأ أثناء تحديث بيانات الطفل:", error);
     next(error); // Pass error to your general error handler
   }
 };

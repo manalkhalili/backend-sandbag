@@ -8,6 +8,7 @@ const errorHandler = require("./middlewares/errorHandler"); // Your general erro
 
 const app = express();
 
+
 // 1. Apply general middleware
 app.use(cors());
 
