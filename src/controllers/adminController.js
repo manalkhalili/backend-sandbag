@@ -31,15 +31,15 @@ exports.generateCoupon = async (req, res) => {
 
     if (!type || !graded) {
       return res
-        .status(400)
-        .json({ success: false, message: "نوع واي دي الصف مطلوبان." });
+          .status(400)
+          .json({ success: false, message: "نوع واي دي الصف مطلوبان." });
     }
 
     if (!["semester1", "semester2", "full_year"].includes(type)) {
       return res.status(400).json({
         success: false,
         message:
-          "نوع القسيمة غير صالح. الأنواع المسموح بها: 'semester1', 'semester2', 'full_year'."
+            "نوع القسيمة غير صالح. الأنواع المسموح بها: 'semester1', 'semester2', 'full_year'."
       });
     }
 
@@ -136,8 +136,8 @@ exports.addSubject = async (req, res) => {
 
     if (!name) {
       return res
-        .status(400)
-        .json({ success: false, message: "اسم المادة مطلوب." });
+          .status(400)
+          .json({ success: false, message: "اسم المادة مطلوب." });
     }
 
     const existingSubject = await Subject.findOne({
@@ -155,13 +155,14 @@ exports.addSubject = async (req, res) => {
 
     const newSubject = await Subject.create({ name });
 
-    // --- NEW LOGIC: Automatically create 5 cards for the new subject ---
+    // --- NEW LOGIC: Automatically create 6 cards for the new subject ---
     const defaultCardNames = [
-      "عروض تقديمية", // Presentations
-      "كروت تعليمية", // Educational Cards
+      "عروض تقديمية",   // Presentations
+      "كروت تعليمية",   // Educational Cards
       "فيديوهات تعليمية", // Educational Videos
-      "العاب تعليمية", // Educational Games
-      "خرائط ذهنية", // Mind Maps
+      "العاب تعليمية",   // Educational Games
+      "خرائط ذهنية",    // Mind Maps
+      "أوراق عمل",      // Worksheets ✅ الجديد
     ];
 
     const cardsToCreate = defaultCardNames.map((cardName) => ({
@@ -169,7 +170,6 @@ exports.addSubject = async (req, res) => {
       subjectId: newSubject.id, // Link cards to the newly created subject
     }));
 
-    // Use bulkCreate for efficiency to create all cards at once
     const createdCards = await Card.bulkCreate(cardsToCreate);
     // --- END NEW LOGIC ---
 
@@ -178,7 +178,7 @@ exports.addSubject = async (req, res) => {
       message: "تم إضافة المادة بنجاح وتم إنشاء البطاقات .",
       data: {
         subject: newSubject,
-        defaultCards: createdCards, // Optionally return the created cards in the response
+        defaultCards: createdCards,
       },
     });
   } catch (error) {
@@ -193,7 +193,7 @@ exports.addSubject = async (req, res) => {
 
 // API 5: Add New Material Item
 // POST /api/admin/materials
-// Body: { type: "youtube"|"pdf"|..., title: "Material Title", url: "http://example.com", gradeId: "gradeId", semester: "semester1"|"semester2", cardId: 123 }
+// Body: { type: "youtube"|"pdf"|..., title: "Material Title", url: "http://example.com", gradeId: "gradeId", semester: "semester1"|"semester2"|"full_year", cardId: 123 }
 exports.addMaterial = async (req, res) => {
   try {
     const { type, title, url, gradeId, semester, cardId } = req.body;
@@ -202,7 +202,7 @@ exports.addMaterial = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "جميع الحقول (النوع، العنوان، الرابط، اي دي الصف، الفصل الدراسي، اي دي البطاقة) مطلوبة",
+            "جميع الحقول (النوع، العنوان، الرابط، اي دي الصف، الفصل الدراسي، اي دي البطاقة) مطلوبة",
       });
     }
 
@@ -213,20 +213,21 @@ exports.addMaterial = async (req, res) => {
       "link",
       "assignment",
       "game",
-    ]; // Updated here as well for consistency
+      "worksheet", // ✅ نوع جديد لأوراق العمل
+    ];
     if (!validMaterialTypes.includes(type)) {
       return res.status(400).json({
         success: false,
         message: ` نوع المادة غير صالح. الأنواع المسموح بها: ${validMaterialTypes.join(
-          ", "
+            ", "
         )}.`,
       });
     }
 
-    if (!["semester1", "semester2"].includes(semester)) {
+    if (!["semester1", "semester2", "full_year"].includes(semester)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid semester. Allowed: 'semester1' or 'semester2'.",
+        message: "الفصل الدراسي غير صالح. المسموح: 'semester1' أو 'semester2' أو 'full_year'.",
       });
     }
 
@@ -301,15 +302,15 @@ exports.getCardsBySubjectId = async (req, res) => {
 
     if (isNaN(subjectId) || parseInt(subjectId) <= 0) {
       return res
-        .status(400)
-        .json({ success: false, message: "اي دي المادة غير صالح." });
+          .status(400)
+          .json({ success: false, message: "اي دي المادة غير صالح." });
     }
 
     const subject = await Subject.findByPk(subjectId);
     if (!subject) {
       return res
-        .status(404)
-        .json({ success: false, message: "المادة غير موجودة." });
+          .status(404)
+          .json({ success: false, message: "المادة غير موجودة." });
     }
 
     const cards = await Card.findAll({
@@ -327,8 +328,8 @@ exports.getCardsBySubjectId = async (req, res) => {
     });
   } catch (error) {
     console.error(
-      `Error fetching cards for subject ${req.params.subjectId} for admin:`,
-      error
+        `Error fetching cards for subject ${req.params.subjectId} for admin:`,
+        error
     );
     res.status(500).json({
       success: false,
