@@ -2,14 +2,17 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.removeColumn("Scores", "materialId");
+    const table = await queryInterface.describeTable("Scores");
+    if (table.materialId) {
+      await queryInterface.removeColumn("Scores", "materialId");
+    }
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.addColumn("Scores", "materialId", {
       type: Sequelize.INTEGER,
       references: {
-        model: "Materials", 
+        model: "Materials",
         key: "id",
       },
       onUpdate: "CASCADE",

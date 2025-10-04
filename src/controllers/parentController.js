@@ -101,11 +101,10 @@ exports.addChild = async (req, res) => {
       });
     }
 
-    if (!["semester1", "semester2"].includes(currentSemester)) {
+    if (!["semester1", "semester2", "full_year"].includes(currentSemester)) {  // Added "full_year"
       return res.status(400).json({
         success: false,
-        message:
-            "الفصل الدراسي غير صالح. القيم المسموح بها هي 'semester1' أو 'semester2'.",
+        message: "الفصل الدراسي غير صالح. القيم المسموح بها هي 'semester1' أو 'semester2' أو 'full_year'.",  // Updated message
       });
     }
 
@@ -220,7 +219,12 @@ exports.addChild = async (req, res) => {
         durationMonths: 4,
         description: "Covers the next four months of the academic year.",
       },
-      // You can add more details specific to each semester here if needed
+      full_year: {
+        name: "Full Year",
+        durationMonths: 12,
+        description: "يغطي السنة الدراسية كاملة.",
+      }
+
     };
     res.status(201).json({
       success: true,
@@ -277,6 +281,7 @@ exports.editChild = async (req, res, next) => {
         }, // Include assigned coupon
       ],
     });
+
 
     if (!child) {
       return res.status(404).json({

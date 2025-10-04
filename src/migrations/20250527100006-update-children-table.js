@@ -5,10 +5,11 @@ module.exports = {
 
 
     await queryInterface.addColumn("Children", "currentSemester", {
-      type: Sequelize.ENUM("semester1", "semester2"),
+      type: Sequelize.ENUM("semester1", "semester2", "full_year"),
       allowNull: false,
       defaultValue: "semester1",
     });
+
 
     await queryInterface.addColumn("Children", "academicYear", {
       type: Sequelize.STRING,

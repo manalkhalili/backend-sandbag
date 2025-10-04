@@ -38,9 +38,10 @@ module.exports = {
         onDelete: "CASCADE",
       },
       semester: {
-        type: Sequelize.ENUM("semester1", "semester2"),
+        type: Sequelize.ENUM("semester1", "semester2", "full_year"),
         allowNull: false,
       },
+
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

@@ -21,8 +21,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+// In the MaterialItem.define section, update the semester field:
     semester: {
-      type: DataTypes.ENUM("semester1", "semester2"),
+      type: DataTypes.ENUM("semester1", "semester2", "full_year"),  // Added "full_year"
       allowNull: false,
     },
     cardId: {

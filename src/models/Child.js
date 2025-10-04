@@ -46,8 +46,9 @@ module.exports = (sequelize, DataTypes) => {
         key: "id",
       },
     },
+// In the Child.define section, update the currentSemester field:
     currentSemester: {
-      type: DataTypes.ENUM("semester1", "semester2"),
+      type: DataTypes.ENUM("semester1", "semester2", "full_year"),  // Added "full_year"
       allowNull: false,
       defaultValue: "semester1",
     },
