@@ -7,7 +7,8 @@ module.exports = (sequelize, DataTypes) => {
         "ppt",
         "link",
         "assignment",
-        "game"
+        "game",
+          "worksheet"
       ),
       allowNull: false,
     },
